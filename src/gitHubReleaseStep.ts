@@ -1,8 +1,7 @@
 
 import { Step, StepOption, StepOptionTypes, StepOptionValueMap } from 'continui-step';
 import { GitHubReleaseContext } from './gitHubReleaseContext';
-import { TextTemplateService } from "continui-services";
-import { Stats, ReadStream } from 'fs';
+import { TextTemplateService } from 'continui-services';
 
 import * as fs from 'fs';
 import * as path from 'path';
@@ -10,7 +9,7 @@ import * as path from 'path';
 import axios from 'axios';
 
 const privateScope = new WeakMap<GitHubReleaseStep, {
-  textTemplateService: TextTemplateService
+  textTemplateService: TextTemplateService,
 }>();
 
 /**
@@ -37,7 +36,9 @@ export class GitHubReleaseStep implements Step<GitHubReleaseContext> {
     /**
      * Get the step description.
      */
-  public get description(): string { return 'Represents a git hub release step that can create well defined releases on Git Hub.'; }
+  public get description(): string { 
+    return 'Represents a git hub release step that can create well defined releases on Git Hub.';
+  }
 
     /**
      * Represents the step otions used to execute the step.
@@ -45,11 +46,14 @@ export class GitHubReleaseStep implements Step<GitHubReleaseContext> {
   public get options(): StepOption[] { return this.getOptions(); }
 
     /**
-     * Creates a restoration point based on the step to rollback the changes in case that the pipe flow breaks.
+     * Creates a restoration point based on the step to rollback the changes in case that the pipe
+     * flow breaks.
      * @param stepOptionsValueMap Represents the options values provided to run the step.
      * @param context Represents the step execution context.
      */
-  public createsRestaurationPoint(stepOptionValueMap: StepOptionValueMap, context: GitHubReleaseContext): void | Promise<void> | IterableIterator<any> {
+  public createsRestaurationPoint(stepOptionValueMap: StepOptionValueMap,
+                                  context: GitHubReleaseContext)
+                                    : void | Promise<void> | IterableIterator<any> {
        // NOTHING to do here.
   }
     
@@ -58,15 +62,17 @@ export class GitHubReleaseStep implements Step<GitHubReleaseContext> {
      * @param stepOptionsValueMap Represents the options values provided to run the step.
      * @param context Represents the step execution context.
      */
-  public* execute(stepOptionValueMap: StepOptionValueMap, context: GitHubReleaseContext): void | Promise<void> | IterableIterator<any> {
+  public* execute(stepOptionValueMap: StepOptionValueMap,
+                  context: GitHubReleaseContext): void | Promise<void> | IterableIterator<any> {
 
     const assets:string[] = this.getNormalizedAssetsPaths(stepOptionValueMap.asset || []);
 
     yield this.createRelease(stepOptionValueMap, context);        
 
-    yield assets.map(asset => {
-      const fileStats: Stats = fs.statSync(asset);
-      const uploadUrl: string = context.uploadURL.replace('{?name,label}', '?name=' + path.basename(asset));
+    yield assets.map((asset) => {
+      const fileStats: fs.Stats = fs.statSync(asset);
+      const uploadUrl: string = context.uploadURL.replace('{?name,label}', '?name=' + 
+                                                           path.basename(asset));
 
       return this.uploadAsset(uploadUrl, fs.createReadStream(asset) ,{
         'Content-Type': 'multipart/form-data',
@@ -80,7 +86,8 @@ export class GitHubReleaseStep implements Step<GitHubReleaseContext> {
      * Restore the step base on the given options and context.
      * @param context Represents the step execution context.
      */
-  public* restore(stepOptionValueMap: StepOptionValueMap, context: GitHubReleaseContext): void | Promise<void> | IterableIterator<any> {
+  public* restore(stepOptionValueMap: StepOptionValueMap,
+                  context: GitHubReleaseContext): void | Promise<void> | IterableIterator<any> {
     if (context.id) {           
       yield axios.delete(`${this.getBaseReleaseApiUrl(stepOptionValueMap)}/` + context.id, {
         headers: {
@@ -95,7 +102,8 @@ export class GitHubReleaseStep implements Step<GitHubReleaseContext> {
      * @param stepOptionsValueMap Represents the options values provided to run the step.
      * @returns A new execution context bases on the provided options.
      */
-  public createsNewContextFromOptionsMap(stepOptionsValueMap: StepOptionValueMap): GitHubReleaseContext {
+  public createsContextFromOptionsMap(stepOptionsValueMap: StepOptionValueMap)
+    : GitHubReleaseContext {
     return  new GitHubReleaseContext();
   }
 
@@ -104,22 +112,27 @@ export class GitHubReleaseStep implements Step<GitHubReleaseContext> {
      * @param stepOptionsValueMap Represents the options values provided to run the step.
      * @param context Represents the step execution context.
      */
-  private createRelease(stepOptionValueMap: StepOptionValueMap, context: GitHubReleaseContext) : Promise<any> {
+  private createRelease(stepOptionValueMap: StepOptionValueMap,
+                        context: GitHubReleaseContext) : Promise<any> {
     const scope = privateScope.get(this);
-
-    return axios.post(`${this.getBaseReleaseApiUrl(stepOptionValueMap)}?access_token=${stepOptionValueMap.token}`, {
+    const relseaseUrl: string = `${this.getBaseReleaseApiUrl(stepOptionValueMap)}?access_token=` +
+                                `${stepOptionValueMap.token}`;
+    const releaseData: any = {
       tag_name:  scope.textTemplateService.parse(stepOptionValueMap.tag),
       target_commitish: scope.textTemplateService.parse(stepOptionValueMap.target),
       name: scope.textTemplateService.parse(stepOptionValueMap.name),
       body: scope.textTemplateService.parse(stepOptionValueMap.description),
       draft: stepOptionValueMap.draft,
       prerelease: stepOptionValueMap.pre,
-    }).then(response => {
+    };
+
+    return axios.post(relseaseUrl, releaseData).then((response) => {
       context.id = response.data.id;
       context.uploadURL = response.data.upload_url;
-    }).catch(error => { 
+    }).catch((error) => {
       throw (error.response.data || 'undefined error creating release');
     });
+  
   }
 
     /**
@@ -128,22 +141,25 @@ export class GitHubReleaseStep implements Step<GitHubReleaseContext> {
      * @param stream Represent the data to be upoaded (File Stream)
      * @param headers Represets the request headers.
      */
-  private uploadAsset(releaseUploadUrl: string, stream: ReadStream, headers: any) : Promise<any> {
+  private uploadAsset(releaseUploadUrl: string,
+                      stream: fs.ReadStream,
+                      headers: any) : Promise<any> {
     return axios.post(releaseUploadUrl, stream, { 
       headers,
     })
-        .catch(error => { 
+        .catch((error) => { 
           throw (error.response.data || 'undefined error uploaing release asset'); 
         });
   }
 
     /**
-     * Get the base release url portion of the Git Hup API base on the provided step option value map.
+     * Get the base release url portion of Git Hup API base on the provided step option value map.
      * @param stepOptionsValueMap Represents the options values provided to run the step.
      * @returns The base release url portion of the Git Hup API
      */
   private getBaseReleaseApiUrl(stepOptionValueMap: StepOptionValueMap): string {
-    return `${stepOptionValueMap.secure ? 'https' : 'http'}://${stepOptionValueMap.host}/repos/${stepOptionValueMap.owner}/${stepOptionValueMap.repository}/releases`;
+    return `${stepOptionValueMap.secure ? 'https' : 'http'}://${stepOptionValueMap.host}/repos/` +
+           `${stepOptionValueMap.owner}/${stepOptionValueMap.repository}/releases`;
   }
 
     /**
@@ -168,7 +184,8 @@ export class GitHubReleaseStep implements Step<GitHubReleaseContext> {
     },
     {
       key: 'secure',
-      description: 'Represents a boolean value specifying if the communication with the host must be secure.',
+      description: 'Represents a boolean value specifying if the communication with the host' + 
+                   'must be secure.',
       isRequired: true,
       type: StepOptionTypes.boolean,
       defaultValue: true,
@@ -193,7 +210,8 @@ export class GitHubReleaseStep implements Step<GitHubReleaseContext> {
     },
     {
       key: 'target',
-      description: 'Represents the target were the tag will be based on, if the tag already exist must not be provided.',
+      description: 'Represents the target were the tag will be based on, if the tag already exist' +
+                   'must not be provided.',
       isTemplated: true,
       type: StepOptionTypes.text,
     },
@@ -235,25 +253,24 @@ export class GitHubReleaseStep implements Step<GitHubReleaseContext> {
      * @returns A normalized resolved paths array.
      */
   private getNormalizedAssetsPaths(assets: string | string[]): string[] {
-    if (typeof assets == 'string') {
-      assets = [assets];
-    }
-
+ 
+    const unormalizedAssets: string[] = typeof assets === 'string' ? [assets] : assets;
     const normalizedAssets: string[] = [];
     const unexistingAssets: string[] = [];
 
-    assets.forEach(asset => {
-      asset = path.resolve(asset);
+    unormalizedAssets.forEach((unresolvedAsset) => {
+      const resolvedAsset = path.resolve(unresolvedAsset);
 
-      if (!fs.existsSync(asset)) {
-        unexistingAssets.push(asset);
+      if (!fs.existsSync(resolvedAsset)) {
+        unexistingAssets.push(resolvedAsset);
       } else {
-        normalizedAssets.push(asset);
+        normalizedAssets.push(resolvedAsset);
       }
     });
 
     if (unexistingAssets.length) {
-      throw new Error('The following assets can not be located: \n\n' + unexistingAssets.join('\n'));
+      throw new Error('The following assets can not be located: \n\n' + 
+                       unexistingAssets.join('\n'));
     } else {
       return normalizedAssets;
     }
