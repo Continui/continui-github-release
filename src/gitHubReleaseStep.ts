@@ -26,7 +26,7 @@ export class GitHubReleaseStep implements Step<GitHubReleaseContext> {
     /**
      * Get the step identifier.
      */
-  public get identifier(): string { return 'githubre'; }
+  public get identifier(): string { return 'github-release'; }
     
     /**
      * Get the step name.
@@ -71,15 +71,17 @@ export class GitHubReleaseStep implements Step<GitHubReleaseContext> {
 
     yield assets.map((asset) => {
       const fileStats: fs.Stats = fs.statSync(asset);
-      const uploadUrl: string = context.uploadURL.replace('{?name,label}', '?name=' + 
-                                                           path.basename(asset));
+      const uploadUrl: string = context.releaseUploadURL.replace('{?name,label}', '?name=' + 
+                                                                  path.basename(asset));
 
       return this.uploadAsset(uploadUrl, fs.createReadStream(asset) ,{
         'Content-Type': 'multipart/form-data',
         'Content-Length': fileStats.size,
         Authorization: 'token ' + stepOptionValueMap.token,
       });
-    });               
+    });  
+    
+    context.assetsHasBeenUpload = !!assets.length;
   }    
     
     /**
@@ -88,8 +90,8 @@ export class GitHubReleaseStep implements Step<GitHubReleaseContext> {
      */
   public* restore(stepOptionValueMap: StepOptionValueMap,
                   context: GitHubReleaseContext): void | Promise<void> | IterableIterator<any> {
-    if (context.id) {           
-      yield axios.delete(`${this.getBaseReleaseApiUrl(stepOptionValueMap)}/` + context.id, {
+    if (context.releaseId) {           
+      yield axios.delete(`${this.getBaseReleaseApiUrl(stepOptionValueMap)}/` + context.releaseId, {
         headers: {
           Authorization: 'token ' + stepOptionValueMap.token,
         },
@@ -127,8 +129,8 @@ export class GitHubReleaseStep implements Step<GitHubReleaseContext> {
     };
 
     return axios.post(relseaseUrl, releaseData).then((response) => {
-      context.id = response.data.id;
-      context.uploadURL = response.data.upload_url;
+      context.releaseId = response.data.id;
+      context.releaseUploadURL = response.data.upload_url;
     }).catch((error) => {
       throw (error.response.data || 'undefined error creating release');
     });
