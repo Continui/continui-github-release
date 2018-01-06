@@ -1,7 +1,7 @@
 
 import { Step, StepOption, StepOptionTypes, StepOptionValueMap } from 'continui-step';
 import { GitHubReleaseContext } from './gitHubReleaseContext';
-//import { TextTemplateService } from "../../services/textTemplateService";
+import { TextTemplateService } from "continui-services";
 import { Stats, ReadStream } from 'fs';
 
 import * as fs from 'fs';
@@ -10,7 +10,7 @@ import * as path from 'path';
 import axios from 'axios';
 
 const privateScope = new WeakMap<GitHubReleaseStep, {
-  textTemplateService: any, // TextTemplateService
+  textTemplateService: TextTemplateService
 }>();
 
 /**
@@ -108,10 +108,10 @@ export class GitHubReleaseStep implements Step<GitHubReleaseContext> {
     const scope = privateScope.get(this);
 
     return axios.post(`${this.getBaseReleaseApiUrl(stepOptionValueMap)}?access_token=${stepOptionValueMap.token}`, {
-      tag_name:  scope.textTemplateService.tranform(stepOptionValueMap.tag),
-      target_commitish: scope.textTemplateService.tranform(stepOptionValueMap.target),
-      name: scope.textTemplateService.tranform(stepOptionValueMap.name),
-      body: scope.textTemplateService.tranform(stepOptionValueMap.description),
+      tag_name:  scope.textTemplateService.parse(stepOptionValueMap.tag),
+      target_commitish: scope.textTemplateService.parse(stepOptionValueMap.target),
+      name: scope.textTemplateService.parse(stepOptionValueMap.name),
+      body: scope.textTemplateService.parse(stepOptionValueMap.description),
       draft: stepOptionValueMap.draft,
       prerelease: stepOptionValueMap.pre,
     }).then(response => {
