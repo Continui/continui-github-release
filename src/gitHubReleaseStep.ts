@@ -148,10 +148,9 @@ export class GitHubReleaseStep implements Step<GitHubReleaseContext> {
                       headers: any) : Promise<any> {
     return axios.post(releaseUploadUrl, stream, { 
       headers,
-    })
-        .catch((error) => { 
-          throw (error.response.data || 'undefined error uploaing release asset'); 
-        });
+    }).catch((error) => { 
+      throw (error.response.data || 'undefined error uploaing release asset'); 
+    });
   }
 
     /**
@@ -162,12 +161,41 @@ export class GitHubReleaseStep implements Step<GitHubReleaseContext> {
   private getBaseReleaseApiUrl(stepOptionValueMap: StepOptionValueMap): string {
     return `${stepOptionValueMap.secure ? 'https' : 'http'}://${stepOptionValueMap.host}/repos/` +
            `${stepOptionValueMap.owner}/${stepOptionValueMap.repository}/releases`;
-  }
+  }    
 
     /**
-     * Returns the step options.
-     * @returns The step options.
+     * Returns a normalized resolved paths based on the provided assets paths.
+     * @param assets Represents the assets that will be upload to the release.
+     * @returns A normalized resolved paths array.
      */
+  private getNormalizedAssetsPaths(assets: string | string[]): string[] {
+ 
+    const unormalizedAssets: string[] = typeof assets === 'string' ? [assets] : assets;
+    const normalizedAssets: string[] = [];
+    const unexistingAssets: string[] = [];
+
+    unormalizedAssets.forEach((unresolvedAsset) => {
+      const resolvedAsset = path.resolve(unresolvedAsset);
+
+      if (!fs.existsSync(resolvedAsset)) {
+        unexistingAssets.push(resolvedAsset);
+      } else {
+        normalizedAssets.push(resolvedAsset);
+      }
+    });
+
+    if (unexistingAssets.length) {
+      throw new Error('The following assets can not be located: \n\n' + 
+                       unexistingAssets.join('\n'));
+    } else {
+      return normalizedAssets;
+    }
+  }
+
+  /**
+   * Returns the step options.
+   * @returns The step options.
+   */
   private getOptions(): StepOption[] {
 
     return[{
@@ -187,7 +215,7 @@ export class GitHubReleaseStep implements Step<GitHubReleaseContext> {
     {
       key: 'secure',
       description: 'Represents a boolean value specifying if the communication with the host' + 
-                   'must be secure.',
+                    'must be secure.',
       isRequired: true,
       type: StepOptionTypes.boolean,
       defaultValue: true,
@@ -213,7 +241,7 @@ export class GitHubReleaseStep implements Step<GitHubReleaseContext> {
     {
       key: 'target',
       description: 'Represents the target were the tag will be based on, if the tag already exist' +
-                   'must not be provided.',
+                    'must not be provided.',
       isTemplated: true,
       type: StepOptionTypes.text,
     },
@@ -248,33 +276,4 @@ export class GitHubReleaseStep implements Step<GitHubReleaseContext> {
       type: StepOptionTypes.list,
     }];        
   }    
-
-    /**
-     * Returns a normalized resolved paths based on the provided assets paths.
-     * @param assets Represents the assets that will be upload to the release.
-     * @returns A normalized resolved paths array.
-     */
-  private getNormalizedAssetsPaths(assets: string | string[]): string[] {
- 
-    const unormalizedAssets: string[] = typeof assets === 'string' ? [assets] : assets;
-    const normalizedAssets: string[] = [];
-    const unexistingAssets: string[] = [];
-
-    unormalizedAssets.forEach((unresolvedAsset) => {
-      const resolvedAsset = path.resolve(unresolvedAsset);
-
-      if (!fs.existsSync(resolvedAsset)) {
-        unexistingAssets.push(resolvedAsset);
-      } else {
-        normalizedAssets.push(resolvedAsset);
-      }
-    });
-
-    if (unexistingAssets.length) {
-      throw new Error('The following assets can not be located: \n\n' + 
-                       unexistingAssets.join('\n'));
-    } else {
-      return normalizedAssets;
-    }
-  }
 }
