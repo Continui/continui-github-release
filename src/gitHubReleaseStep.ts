@@ -117,7 +117,8 @@ export class GitHubReleaseStep implements Step<GitHubReleaseContext> {
   private createRelease(stepOptionValueMap: StepOptionValueMap,
                         context: GitHubReleaseContext) : Promise<any> {
     const scope = privateScope.get(this);
-    const relseaseUrl: string = `${this.getBaseReleaseApiUrl(stepOptionValueMap)}?access_token=` +
+    const baseUrl: string = this.getBaseReleaseApiUrl(stepOptionValueMap);
+    const relseaseUrl: string = `${baseUrl}?access_token=` +
                                 `${stepOptionValueMap.token}`;
     const releaseData: any = {
       tag_name:  scope.textTemplateService.parse(stepOptionValueMap.tag),
@@ -132,7 +133,9 @@ export class GitHubReleaseStep implements Step<GitHubReleaseContext> {
       context.releaseId = response.data.id;
       context.releaseUploadURL = response.data.upload_url;
     }).catch((error) => {
-      throw (error.response.data || 'undefined error creating release');
+      throw (error.response ? 
+                error.response.data : 
+               `Error requesting ${baseUrl} ${error.message}`);
     });
   
   }
@@ -149,7 +152,9 @@ export class GitHubReleaseStep implements Step<GitHubReleaseContext> {
     return axios.post(releaseUploadUrl, stream, { 
       headers,
     }).catch((error) => { 
-      throw (error.response.data || 'undefined error uploaing release asset'); 
+      throw (error.response ? 
+                error.response.data : 
+               `Error requesting ${releaseUploadUrl} ${error.message}`); 
     });
   }
 
