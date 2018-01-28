@@ -134,8 +134,8 @@ export class GitHubReleaseStep implements Step<GitHubReleaseContext> {
       context.releaseUploadURL = response.data.upload_url;
     }).catch((error) => {
       throw new Error(error.response ? 
-                      error.response.data : 
-                      `Error requesting ${baseUrl} ${error.message}`);
+                      JSON.stringify(error.response.data, null, 2) : 
+                     `Error requesting ${baseUrl} ${error.message}`);
     });
   
   }
@@ -153,7 +153,7 @@ export class GitHubReleaseStep implements Step<GitHubReleaseContext> {
       headers,
     }).catch((error) => { 
       throw new Error(error.response ? 
-                      error.response.data : 
+                      JSON.stringify(error.response.data, null, 2) : 
                      `Error requesting ${releaseUploadUrl} ${error.message}`); 
     });
   }
