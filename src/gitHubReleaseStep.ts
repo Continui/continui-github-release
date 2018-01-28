@@ -133,9 +133,9 @@ export class GitHubReleaseStep implements Step<GitHubReleaseContext> {
       context.releaseId = response.data.id;
       context.releaseUploadURL = response.data.upload_url;
     }).catch((error) => {
-      throw (error.response ? 
-                error.response.data : 
-               `Error requesting ${baseUrl} ${error.message}`);
+      throw new Error(error.response ? 
+                      error.response.data : 
+                      `Error requesting ${baseUrl} ${error.message}`);
     });
   
   }
@@ -152,9 +152,9 @@ export class GitHubReleaseStep implements Step<GitHubReleaseContext> {
     return axios.post(releaseUploadUrl, stream, { 
       headers,
     }).catch((error) => { 
-      throw (error.response ? 
-                error.response.data : 
-               `Error requesting ${releaseUploadUrl} ${error.message}`); 
+      throw new Error(error.response ? 
+                      error.response.data : 
+                     `Error requesting ${releaseUploadUrl} ${error.message}`); 
     });
   }
 
