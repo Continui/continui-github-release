@@ -1,8 +1,8 @@
 {
   "name": "continui-githubre",
   "version": "0.0.1",
-  "description": "A continui step characterized by creating well-defined releases on GitHub, useful for continuous delivery.",
-  "main": "dist/continui-githubre.js",
+  "description": "A continui action characterized by creating well-defined releases on GitHub, useful for continuous delivery.",
+  "main": "dist/continui-github-release.js",
   "types": "dist/definitions/index.d.ts",
   "files": [
     "dist"
@@ -27,20 +27,20 @@
     "axios": "^0.17.1"
   },
   "devDependencies": {
-    "@types/mocha": "^2.2.44",
-    "@types/node": "^8.0.53",
+    "@types/mocha": "^2.2.48",
+    "@types/node": "^8.5.9",
     "gulp": "^3.9.1",
     "gulp-clean": "^0.3.2",
     "gulp-mocha": "^4.3.1",
-    "gulp-sourcemaps": "^2.6.1",
+    "gulp-sourcemaps": "^2.6.4",
     "gulp-tslint": "^8.1.2",
-    "gulp-typescript": "^3.2.3",
+    "gulp-typescript": "^3.2.4",
     "gulp-zip": "^4.0.0",
     "rollup": "^0.50.0",
     "rollup-plugin-typescript2": "^0.9.0",
-    "tslint": "^5.8.0",
-    "tslint-config-airbnb": "^5.4.2",
+    "tslint": "^5.9.1",
+    "tslint-config-airbnb": "^5.5.0",
     "typemoq": "^2.1.0",
-    "typescript": "^2.6.2"
+    "typescript": "^2.7.1"
   }
 }

@@ -1,4 +1,4 @@
-import { StepActivationDefinition } from 'continui-step';
-import { GitHubReleaseStepDefinition } from './gitHubReleaseStepDefinition';
+import { ActionActivationDefinition } from 'continui-action';
+import { GitHubReleaseActionDefinition } from './gitHubReleaseActionDefinition';
 
-export default new GitHubReleaseStepDefinition();
+export default new GitHubReleaseActionDefinition();

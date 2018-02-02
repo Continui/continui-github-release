@@ -35,7 +35,7 @@ module.exports = function configureGulp(gulp) {
         return rollup.rollup(rollupOptions)
         .then(bundle => {
            return bundle.write({
-               file: './dist/continui-githubre.js',
+               file: './dist/continui-github-release.js',
                format: 'cjs'
            })
         })

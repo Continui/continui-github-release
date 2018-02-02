@@ -1,5 +1,5 @@
 
-import { Step, StepOption, StepOptionTypes, StepOptionValueMap } from 'continui-step';
+import { Action, ActionOption, ActionOptionTypes, ActionOptionValueMap } from 'continui-action';
 import { GitHubReleaseContext } from './gitHubReleaseContext';
 import { TextTemplateService } from 'continui-services';
 
@@ -8,14 +8,14 @@ import * as path from 'path';
 
 import axios from 'axios';
 
-const privateScope = new WeakMap<GitHubReleaseStep, {
+const privateScope = new WeakMap<GitHubReleaseAction, {
   textTemplateService: TextTemplateService,
 }>();
 
 /**
- * Represents a git hub release step that can create well defined releases on Git Hub.
+ * Represents a git hub release action that can create well defined releases on Git Hub.
  */
-export class GitHubReleaseStep implements Step<GitHubReleaseContext> {
+export class GitHubReleaseAction implements Action<GitHubReleaseContext> {
 
   constructor(textTemplateService: any) {
     privateScope.set(this, {
@@ -24,50 +24,50 @@ export class GitHubReleaseStep implements Step<GitHubReleaseContext> {
   }
 
     /**
-     * Get the step identifier.
+     * Get the action identifier.
      */
   public get identifier(): string { return 'github-release'; }
     
     /**
-     * Get the step name.
+     * Get the action name.
      */
   public get name(): string { return 'Git Hub Release'; }
 
     /**
-     * Get the step description.
+     * Get the action description.
      */
   public get description(): string { 
-    return 'Represents a git hub release step that can create well defined releases on Git Hub.';
+    return 'Represents a git hub release action that can create well defined releases on Git Hub.';
   }
 
     /**
-     * Represents the step otions used to execute the step.
+     * Represents the action otions used to execute the action.
      */
-  public get options(): StepOption[] { return this.getOptions(); }
+  public get options(): ActionOption[] { return this.getOptions(); }
 
     /**
-     * Creates a restoration point based on the step to rollback the changes in case that the pipe
+     * Creates a restoration point based on the action to rollback the changes if the pipe
      * flow breaks.
-     * @param stepOptionsValueMap Represents the options values provided to run the step.
-     * @param context Represents the step execution context.
+     * @param actionOptionsValueMap Represents the options values provided to run the action.
+     * @param context Represents the action execution context.
      */
-  public createsRestaurationPoint(stepOptionValueMap: StepOptionValueMap,
+  public createsRestaurationPoint(actionOptionValueMap: ActionOptionValueMap,
                                   context: GitHubReleaseContext)
                                     : void | Promise<void> | IterableIterator<any> {
        // NOTHING to do here.
   }
     
     /**
-     * Execute the step base on the given options and context.
-     * @param stepOptionsValueMap Represents the options values provided to run the step.
-     * @param context Represents the step execution context.
+     * Execute the action base on the given options and context.
+     * @param actionOptionsValueMap Represents the options values provided to run the action.
+     * @param context Represents the action execution context.
      */
-  public* execute(stepOptionValueMap: StepOptionValueMap,
+  public* execute(actionOptionValueMap: ActionOptionValueMap,
                   context: GitHubReleaseContext): void | Promise<void> | IterableIterator<any> {
 
-    const assets:string[] = this.getNormalizedAssetsPaths(stepOptionValueMap.asset || []);
+    const assets:string[] = this.getNormalizedAssetsPaths(actionOptionValueMap.asset || []);
 
-    yield this.createRelease(stepOptionValueMap, context);        
+    yield this.createRelease(actionOptionValueMap, context);        
 
     yield assets.map((asset) => {
       const fileStats: fs.Stats = fs.statSync(asset);
@@ -77,7 +77,7 @@ export class GitHubReleaseStep implements Step<GitHubReleaseContext> {
       return this.uploadAsset(uploadUrl, fs.createReadStream(asset) ,{
         'Content-Type': 'multipart/form-data',
         'Content-Length': fileStats.size,
-        Authorization: 'token ' + stepOptionValueMap.token,
+        Authorization: 'token ' + actionOptionValueMap.token,
       });
     });  
     
@@ -85,48 +85,50 @@ export class GitHubReleaseStep implements Step<GitHubReleaseContext> {
   }    
     
     /**
-     * Restore the step base on the given options and context.
-     * @param context Represents the step execution context.
+     * Restore the action base on the given options and context.
+     * @param context Represents the action execution context.
      */
-  public* restore(stepOptionValueMap: StepOptionValueMap,
+  public* restore(actionOptionValueMap: ActionOptionValueMap,
                   context: GitHubReleaseContext): void | Promise<void> | IterableIterator<any> {
     if (context.releaseId) {           
-      yield axios.delete(`${this.getBaseReleaseApiUrl(stepOptionValueMap)}/` + context.releaseId, {
-        headers: {
-          Authorization: 'token ' + stepOptionValueMap.token,
+      yield axios.delete(
+        `${this.getBaseReleaseApiUrl(actionOptionValueMap)}/` + context.releaseId, {
+          headers: {
+            Authorization: 'token ' + actionOptionValueMap.token,
+          },
         },
-      });              
+      );              
     }
   }
 
     /**
      * Creates and return an new context bases on the provided options.
-     * @param stepOptionsValueMap Represents the options values provided to run the step.
+     * @param actionOptionsValueMap Represents the options values provided to run the action.
      * @returns A new execution context bases on the provided options.
      */
-  public createsContextFromOptionsMap(stepOptionsValueMap: StepOptionValueMap)
+  public createsContextFromOptionsMap(actionOptionsValueMap: ActionOptionValueMap)
     : GitHubReleaseContext {
     return  new GitHubReleaseContext();
   }
 
     /**
-     * Creates a Git Hub release bases on the step options value.
-     * @param stepOptionsValueMap Represents the options values provided to run the step.
-     * @param context Represents the step execution context.
+     * Creates a Git Hub release bases on the action options value.
+     * @param actionOptionsValueMap Represents the options values provided to run the action.
+     * @param context Represents the action execution context.
      */
-  private createRelease(stepOptionValueMap: StepOptionValueMap,
+  private createRelease(actionOptionValueMap: ActionOptionValueMap,
                         context: GitHubReleaseContext) : Promise<any> {
     const scope = privateScope.get(this);
-    const baseUrl: string = this.getBaseReleaseApiUrl(stepOptionValueMap);
+    const baseUrl: string = this.getBaseReleaseApiUrl(actionOptionValueMap);
     const relseaseUrl: string = `${baseUrl}?access_token=` +
-                                `${stepOptionValueMap.token}`;
+                                `${actionOptionValueMap.token}`;
     const releaseData: any = {
-      tag_name:  scope.textTemplateService.parse(stepOptionValueMap.tag),
-      target_commitish: scope.textTemplateService.parse(stepOptionValueMap.target),
-      name: scope.textTemplateService.parse(stepOptionValueMap.name),
-      body: scope.textTemplateService.parse(stepOptionValueMap.description),
-      draft: stepOptionValueMap.draft,
-      prerelease: stepOptionValueMap.pre,
+      tag_name:  scope.textTemplateService.parse(actionOptionValueMap.tag),
+      target_commitish: scope.textTemplateService.parse(actionOptionValueMap.target),
+      name: scope.textTemplateService.parse(actionOptionValueMap.name),
+      body: scope.textTemplateService.parse(actionOptionValueMap.description),
+      draft: actionOptionValueMap.draft,
+      prerelease: actionOptionValueMap.pre,
     };
 
     return axios.post(relseaseUrl, releaseData).then((response) => {
@@ -159,13 +161,13 @@ export class GitHubReleaseStep implements Step<GitHubReleaseContext> {
   }
 
     /**
-     * Get the base release url portion of Git Hup API base on the provided step option value map.
-     * @param stepOptionsValueMap Represents the options values provided to run the step.
+     * Get the base release url portion of Git Hup API base on the provided action option value map.
+     * @param actionOptionsValueMap Represents the options values provided to run the action.
      * @returns The base release url portion of the Git Hup API
      */
-  private getBaseReleaseApiUrl(stepOptionValueMap: StepOptionValueMap): string {
-    return `${stepOptionValueMap.secure ? 'https' : 'http'}://${stepOptionValueMap.host}/repos/` +
-           `${stepOptionValueMap.owner}/${stepOptionValueMap.repository}/releases`;
+  private getBaseReleaseApiUrl(actionOptionValueMap: ActionOptionValueMap): string {
+    return `${actionOptionValueMap.secure ? 'https' : 'http'}://${actionOptionValueMap.host}` +
+           `/repos/${actionOptionValueMap.owner}/${actionOptionValueMap.repository}/releases`;
   }    
 
     /**
@@ -198,23 +200,23 @@ export class GitHubReleaseStep implements Step<GitHubReleaseContext> {
   }
 
   /**
-   * Returns the step options.
-   * @returns The step options.
+   * Returns the action options.
+   * @returns The action options.
    */
-  private getOptions(): StepOption[] {
+  private getOptions(): ActionOption[] {
 
     return[{
       key: 'token',
       description: 'Represents the git hub token to comunicate with the API',
       isRequired: true,
       isSecure: true,
-      type: StepOptionTypes.text,
+      type: ActionOptionTypes.text,
     },
     {
       key: 'host',
       description: 'Represents the git hub host to comunicate with.',
       isRequired: true,
-      type: StepOptionTypes.text,
+      type: ActionOptionTypes.text,
       defaultValue: 'api.github.com',
     },
     {
@@ -222,63 +224,63 @@ export class GitHubReleaseStep implements Step<GitHubReleaseContext> {
       description: 'Represents a boolean value specifying if the communication with the host' + 
                     'must be secure.',
       isRequired: true,
-      type: StepOptionTypes.boolean,
+      type: ActionOptionTypes.boolean,
       defaultValue: true,
     },
     {
       key: 'owner',
       description: 'Represents the owner name of the repository.',
       isRequired: true,
-      type: StepOptionTypes.text,
+      type: ActionOptionTypes.text,
     },
     {
       key: 'repository',
       description: 'Represents the repository that will be released.',
       isRequired: true,
-      type: StepOptionTypes.text,
+      type: ActionOptionTypes.text,
     },
     {
       key: 'tag',
       description: 'Represents the tag where the release will be based on.',
       isTemplated: true,
-      type: StepOptionTypes.text,
+      type: ActionOptionTypes.text,
     },
     {
       key: 'target',
       description: 'Represents the target were the tag will be based on, if the tag already exist' +
                     'must not be provided.',
       isTemplated: true,
-      type: StepOptionTypes.text,
+      type: ActionOptionTypes.text,
     },
     {
       key: 'name',
       description: 'Represents the release name.',
       isRequired: true,
       isTemplated: true,
-      type: StepOptionTypes.text,
+      type: ActionOptionTypes.text,
     },
     {
       key: 'description',
       description: 'Represents the release description.',
       isTemplated: true,
-      type: StepOptionTypes.text,
+      type: ActionOptionTypes.text,
     },
     {
       key: 'draft',
       description: 'Represents a boolean value specifying if the release is a draft.',
       defaultValue: false,
-      type: StepOptionTypes.boolean,
+      type: ActionOptionTypes.boolean,
     },
     {
       key: 'pre',
       description: 'Represents a boolean value specifying if the release is a pre-release',
       defaultValue: false,
-      type: StepOptionTypes.boolean,
+      type: ActionOptionTypes.boolean,
     },
     {
       key: 'asset',
       description: 'Represents a list of paths that represents the assets that will be uploaded.',
-      type: StepOptionTypes.list,
+      type: ActionOptionTypes.list,
     }];        
   }    
 }
