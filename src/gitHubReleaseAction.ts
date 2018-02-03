@@ -1,6 +1,6 @@
 
 import { Action, ActionOption, ActionOptionTypes, ActionOptionValueMap } from 'continui-action';
-import { GitHubReleaseContext } from './gitHubReleaseContext';
+import { GitHubReleaseActionContext } from './gitHubReleaseActionContext';
 import { TextTemplateService } from 'continui-services';
 
 import * as fs from 'fs';
@@ -15,7 +15,7 @@ const privateScope = new WeakMap<GitHubReleaseAction, {
 /**
  * Represents a git hub release action that can create well defined releases on Git Hub.
  */
-export class GitHubReleaseAction implements Action<GitHubReleaseContext> {
+export class GitHubReleaseAction implements Action<GitHubReleaseActionContext> {
 
   constructor(textTemplateService: any) {
     privateScope.set(this, {
@@ -52,7 +52,7 @@ export class GitHubReleaseAction implements Action<GitHubReleaseContext> {
      * @param context Represents the action execution context.
      */
   public createsRestaurationPoint(actionOptionValueMap: ActionOptionValueMap,
-                                  context: GitHubReleaseContext)
+                                  context: GitHubReleaseActionContext)
                                     : void | Promise<void> | IterableIterator<any> {
        // NOTHING to do here.
   }
@@ -63,7 +63,8 @@ export class GitHubReleaseAction implements Action<GitHubReleaseContext> {
      * @param context Represents the action execution context.
      */
   public* execute(actionOptionValueMap: ActionOptionValueMap,
-                  context: GitHubReleaseContext): void | Promise<void> | IterableIterator<any> {
+                  context: GitHubReleaseActionContext)
+                    : void | Promise<void> | IterableIterator<any> {
 
     const assets:string[] = this.getNormalizedAssetsPaths(actionOptionValueMap.asset || []);
 
@@ -89,7 +90,8 @@ export class GitHubReleaseAction implements Action<GitHubReleaseContext> {
      * @param context Represents the action execution context.
      */
   public* restore(actionOptionValueMap: ActionOptionValueMap,
-                  context: GitHubReleaseContext): void | Promise<void> | IterableIterator<any> {
+                  context: GitHubReleaseActionContext)
+                    : void | Promise<void> | IterableIterator<any> {
     if (context.releaseId) {           
       yield axios.delete(
         `${this.getBaseReleaseApiUrl(actionOptionValueMap)}/` + context.releaseId, {
@@ -107,8 +109,8 @@ export class GitHubReleaseAction implements Action<GitHubReleaseContext> {
      * @returns A new execution context bases on the provided options.
      */
   public createsContextFromOptionsMap(actionOptionsValueMap: ActionOptionValueMap)
-    : GitHubReleaseContext {
-    return  new GitHubReleaseContext();
+    : GitHubReleaseActionContext {
+    return  new GitHubReleaseActionContext();
   }
 
     /**
@@ -117,7 +119,7 @@ export class GitHubReleaseAction implements Action<GitHubReleaseContext> {
      * @param context Represents the action execution context.
      */
   private createRelease(actionOptionValueMap: ActionOptionValueMap,
-                        context: GitHubReleaseContext) : Promise<any> {
+                        context: GitHubReleaseActionContext) : Promise<any> {
     const scope = privateScope.get(this);
     const baseUrl: string = this.getBaseReleaseApiUrl(actionOptionValueMap);
     const relseaseUrl: string = `${baseUrl}?access_token=` +
