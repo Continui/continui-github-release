@@ -1,7 +1,7 @@
 /**
  * Represents the release context that used to handle the process information.
  */
-export class GitHubReleaseContext {
+export class GitHubReleaseActionContext {
   /**
    * Represents the GitHub release id.
    */
