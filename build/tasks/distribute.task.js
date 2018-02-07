@@ -22,7 +22,8 @@ const rollupOptions = {
     external: [
         'fs',
         'path',
-        'axios'
+        'axios',
+        'continui-action'
     ]
 }
 
