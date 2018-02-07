@@ -62,7 +62,7 @@ export class BuildInGitHubReleaseBaseUrlProvider implements GitHubReleaseBaseUrl
 
     let baseUrl: string = '';
     baseUrl += actionOptionValueMap.secure ? 'https' : 'http';
-    baseUrl += `//${host}/`;
+    baseUrl += `://${host}/`;
     baseUrl += 'repos/';
     baseUrl += `${actionOptionValueMap.owner}/`;
     baseUrl += `${actionOptionValueMap.repository}/`;
