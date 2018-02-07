@@ -42,15 +42,16 @@ export class GitHubReleaseActionDefinition implements ActionActivationDefinition
                            .to(BuildInGitHubReleaseService);
 
     actionActivationContext.containerizedKernel
-                           .bind('gitHubReleaseBaseUrlBuilder')
+                           .bind('gitHubReleaseBaseUrlProvider')
                            .to(BuildInGitHubReleaseBaseUrlProvider)
-                           .inPerCallMode();
+                           .inPerResolutionMode();
 
     actionActivationContext.containerizedKernel
                            .bind('actionOptionValueMapSharer')
                            .to(BuildInActionOptionValueMapSharer)
-                           .inPerCallMode()
-                           .whenInjectedExactlyIntoTypes(
+                           .inPerResolutionMode()
+                           .whenInjectedIntoTypes(
+                             GitHubReleaseAction,
                              BuildInGitHubReleaseService,
                              BuildInGitHubReleaseBaseUrlProvider,
                              BuildInGitHubReleaseAssetsService,
