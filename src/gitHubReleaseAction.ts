@@ -77,8 +77,8 @@ export class GitHubReleaseAction extends Action<GitHubReleaseActionContext> {
 
     const scope = privateScope.get(this);
     
-    scope.actionOptionValueMapSharer.sotoreActionOptionValueMap(actionOptionValueMap);
-
+    scope.actionOptionValueMapSharer.storeActionOptionValueMap(actionOptionValueMap);
+    
     context.releaseId = yield scope.gitHubReleaseService.createRelease({
       tag_name: scope.textTemplateService.parse(actionOptionValueMap.tag),
       target_commitish: scope.textTemplateService.parse(actionOptionValueMap.target),

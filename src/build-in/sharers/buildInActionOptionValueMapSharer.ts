@@ -20,7 +20,7 @@ export class BuildInActionOptionValueMapSharer implements ActionOptionValueMapSh
      * Store the action option value map to provide it when is requested.
      * @param actionOptionValueMap option value map Represents the action option value map.
      */
-  public sotoreActionOptionValueMap(actionOptionValueMap: ActionOptionValueMap): void {
+  public storeActionOptionValueMap(actionOptionValueMap: ActionOptionValueMap): void {
     privateScope.get(this).actionOptionValueMap = actionOptionValueMap;
   }
 
